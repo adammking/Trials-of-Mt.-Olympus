@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class PlayerBehavior : MonoBehaviour
 {
-    // Start is called before the first frame update
+    // Start is called before the first frame update\
     public float moveSpeed;
     public LayerMask solidObjectsLayer;
     public LayerMask interactableLayer;
@@ -21,11 +21,13 @@ public class PlayerBehavior : MonoBehaviour
     public LastAxis lastAxis = LastAxis.None;
 
     private Animator animator;
+    private PlayerStats playerStats;
 
     private void Awake() 
     {
 
         animator = GetComponent<Animator>();
+        playerStats = GetComponent<PlayerStats>();
 
     }
 
@@ -38,22 +40,60 @@ public class PlayerBehavior : MonoBehaviour
         input.x = Input.GetAxisRaw("Horizontal");
         input.y = Input.GetAxisRaw("Vertical");
 
-        if (input != Vector2.zero && !inDialogue)
+
+        if (input != Vector2.zero && !inDialogue && playerStats.IsAlive)
         {
             isMoving = true;
             Move();
-        } else
+        }
+        else
         {
             isMoving = false;
         }
 
         animator.SetBool("isMoving", isMoving);
 
+
         if (Input.GetKeyDown(KeyCode.Z))
         {
             Interact();
         }
 
+        if (Input.GetKeyDown(KeyCode.X))
+        {
+            TakeDamage();
+        }
+
+        if (Input.GetKeyDown(KeyCode.C))
+        {
+            Heal();
+        }
+
+        if (Input.GetKeyDown(KeyCode.F))
+        {
+            BringBackToLife();
+        }
+
+        if (Input.GetMouseButtonDown(0))
+        {
+            print("click");
+        }
+
+    }
+
+    void TakeDamage()
+    {
+        playerStats.ApplyDamage(20);
+    }
+
+    void Heal()
+    {
+        playerStats.AddHealth(20);
+    }
+
+    void BringBackToLife()
+    {
+        playerStats.BringCharacterToLife();
     }
 
     void Interact()
@@ -112,7 +152,7 @@ public class PlayerBehavior : MonoBehaviour
         if (PathIsWalkable())
         {
             // Moves character if the path ahead is walkable
-            transform.position = Vector3.MoveTowards(transform.position, targetPos, moveSpeed * Time.deltaTime);
+            transform.position = Vector2.MoveTowards(transform.position, targetPos, moveSpeed * Time.deltaTime);
         }
         else
         {
