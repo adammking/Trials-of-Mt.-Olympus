@@ -19,20 +19,24 @@ public class DamageZone : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        ApplyHeal();
+        if (collision.tag == "Player")
+        {
+            ApplyDamage();
+        }
+        
     }
 
     private void OnTriggerStay2D(Collider2D collision)
     {
 
-        if (Time.time - timeSinceLastUpdate >= rate)
+        if (Time.time - timeSinceLastUpdate >= rate && collision.tag == "Player")
         {
-            ApplyHeal();
+            ApplyDamage();
         }
 
     }
 
-    private void ApplyHeal()
+    private void ApplyDamage()
     {
         timeSinceLastUpdate = Time.time;
         playerStats.ApplyDamage(damage);

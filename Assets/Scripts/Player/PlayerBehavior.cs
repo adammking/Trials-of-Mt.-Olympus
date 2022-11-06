@@ -12,91 +12,38 @@ public class PlayerBehavior : MonoBehaviour
 
     public GameObject dialoguePanel;
     private bool inDialogue = false;
+    public bool InDialogue { get { return inDialogue; } set { inDialogue = value; } }
     private NPCScript dialoguePartner;
 
-    private bool isMoving;
-    private Vector2 input;
+    private bool _isMoving;
+    public bool IsMoving
+    {
+        get { return _isMoving; }
+        set { _isMoving = value; }
+    }
+
     private Vector2 movement;
-    public enum LastAxis { None, X, Y }
-    public LastAxis lastAxis = LastAxis.None;
 
-    private Animator animator;
-    private PlayerStats playerStats;
+    public Animator animator;
+    public PlayerStats playerStats;
+    public PlayerInput playerInput;
 
-    private void Awake() 
-    {
-
-        animator = GetComponent<Animator>();
-        playerStats = GetComponent<PlayerStats>();
-
-    }
-
-    private void Update()
-    {
-
-        if (input.x == 0 && Input.GetAxisRaw("Horizontal") != 0) lastAxis = LastAxis.X;
-        if (input.y == 0 && Input.GetAxisRaw("Vertical") != 0) lastAxis = LastAxis.Y;
-
-        input.x = Input.GetAxisRaw("Horizontal");
-        input.y = Input.GetAxisRaw("Vertical");
-
-
-        if (input != Vector2.zero && !inDialogue && playerStats.IsAlive)
-        {
-            isMoving = true;
-            Move();
-        }
-        else
-        {
-            isMoving = false;
-        }
-
-        animator.SetBool("isMoving", isMoving);
-
-
-        if (Input.GetKeyDown(KeyCode.Z))
-        {
-            Interact();
-        }
-
-        if (Input.GetKeyDown(KeyCode.X))
-        {
-            TakeDamage();
-        }
-
-        if (Input.GetKeyDown(KeyCode.C))
-        {
-            Heal();
-        }
-
-        if (Input.GetKeyDown(KeyCode.F))
-        {
-            BringBackToLife();
-        }
-
-        if (Input.GetMouseButtonDown(0))
-        {
-            print("click");
-        }
-
-    }
-
-    void TakeDamage()
+    public void TakeDamage()
     {
         playerStats.ApplyDamage(20);
     }
 
-    void Heal()
+    public void Heal()
     {
         playerStats.AddHealth(20);
     }
 
-    void BringBackToLife()
+    public void BringBackToLife()
     {
         playerStats.BringCharacterToLife();
     }
 
-    void Interact()
+    public void Interact()
     {
 
         if (!inDialogue)
@@ -126,18 +73,18 @@ public class PlayerBehavior : MonoBehaviour
         
     }
 
-    void Move() 
+    public void Move() 
     {
 
         // Handles multiple movement keys being held down
-        if (input.x != 0 && input.y != 0)
+        if (playerInput.input.x != 0 && playerInput.input.y != 0)
         {
-            if (lastAxis == LastAxis.X) movement = new Vector2(input.x, 0);
-            if (lastAxis == LastAxis.Y) movement = new Vector2(0, input.y);
+            if (playerInput.lastAxis == PlayerInput.LastAxis.X) movement = new Vector2(playerInput.input.x, 0);
+            if (playerInput.lastAxis == PlayerInput.LastAxis.Y) movement = new Vector2(0, playerInput.input.y);
         } 
         else
         {
-            movement = input;
+            movement = playerInput.input;
         }
 
         // Sets animation state based on current movement direction
@@ -157,7 +104,7 @@ public class PlayerBehavior : MonoBehaviour
         else
         {
             // Changes movement state when not able to continue walking
-            isMoving = false;
+            _isMoving = false;
         }
 
     }

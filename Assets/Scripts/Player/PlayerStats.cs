@@ -136,7 +136,9 @@ public class PlayerStats : MonoBehaviour
         {
             print("You're dead. RIP.");
             isAlive = false;
+            deathScript.EnableObject();
             deathScript.ShowDeathImage();
+            Time.timeScale = 0.0f;
         }
         
     }
@@ -149,6 +151,8 @@ public class PlayerStats : MonoBehaviour
             isAlive = true;
             SetHealth(_maxHealth);
             deathScript.HideDeathImage();
+            deathScript.DisableObject();
+            Time.timeScale = 1.0f;
         }
         else
         {
