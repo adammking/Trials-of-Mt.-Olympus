@@ -37,7 +37,7 @@ public class PlayerInput : MonoBehaviour
             _input.y = Input.GetAxisRaw("Vertical");
 
 
-            if (_input != Vector2.zero && !playerBehavior.InDialogue)
+            if (_input != Vector2.zero && !playerBehavior.InDialogue && !playerBehavior.InMenu)
             {
                 playerBehavior.IsMoving = true;
                 playerBehavior.Move();
@@ -50,13 +50,14 @@ public class PlayerInput : MonoBehaviour
             playerBehavior.animator.SetBool("isMoving", playerBehavior.IsMoving);
 
 
-            if (Input.GetKeyDown(KeyCode.Z))
+            if (Input.GetKeyDown(KeyCode.Z) && !playerBehavior.InMenu)
             {
                 playerBehavior.Interact();
             }
 
             if (Input.GetKeyDown(KeyCode.X))
             {
+                
                 playerBehavior.TakeDamage();
             }
 
@@ -65,11 +66,70 @@ public class PlayerInput : MonoBehaviour
                 playerBehavior.Heal();
             }
 
+            // Need to hold down right mouse button for "combat mode"
+            /*if (Input.GetMouseButton(1))
+            {
+                if (Input.GetMouseButtonDown(0))
+                {
+                    playerAttacks.CastAbility1();
+                }
+
+                if (Input.GetMouseButtonDown(2))
+                {
+                    playerAttacks.CastAbility2();
+                }
+            }*/
+
             if (Input.GetMouseButtonDown(0))
             {
-                playerAttacks.SpawnDamageZone();
+                if(!playerBehavior.InDialogue && !playerBehavior.InMenu)
+                {
+                    playerAttacks.CastAbility1();
+                }
+            }
+
+            if (Input.GetMouseButtonDown(1))
+            {
+                if (!playerBehavior.InDialogue && !playerBehavior.InMenu)
+                {
+                    playerAttacks.CastAbility2();
+                }
+            }
+
+            if (Input.GetKeyDown(KeyCode.Tab))
+            {
+                if (!playerBehavior.InDialogue)
+                {
+                    if (playerBehavior.InMenu)
+                    {
+                        playerBehavior.InMenu = false;
+                    }
+                    else
+                    {
+                        playerBehavior.InMenu = true;
+                    }
+                    PlayerHUDParent.toggleAbilitiesWindow();
+                }
+            }
+
+            if (Input.GetKeyDown(KeyCode.Escape))
+            {
+
+                if (!playerBehavior.InDialogue && !playerBehavior.InMenu && Time.timeScale == 1)
+                {
+                    Time.timeScale = 0;
+                } else if (!playerBehavior.InDialogue && !playerBehavior.InMenu && Time.timeScale == 0)
+                {
+                    Time.timeScale = 1;
+                } else if (playerBehavior.InMenu)
+                {
+                    PlayerHUDParent.toggleAbilitiesWindow();
+                    playerBehavior.InMenu = false;
+                }
+
             }
 
         }
     }
+
 }

@@ -5,48 +5,56 @@ using UnityEngine;
 public class PlayerBehavior : MonoBehaviour
 {
     // Start is called before the first frame update\
-    public float moveSpeed;
+    public float regularMoveSpeed;
+    public float slowedMoveSpeed;
     public LayerMask solidObjectsLayer;
     public LayerMask interactableLayer;
     public float interactDistance = 1.15f;
-
+    public Animator animator;
+    public PlayerInput playerInput;
     public GameObject dialoguePanel;
-    private bool inDialogue = false;
-    public bool InDialogue { get { return inDialogue; } set { inDialogue = value; } }
-    private NPCScript dialoguePartner;
+    public float feetHitboxOffset;
+
+    private float moveSpeed;
+    public float MoveSpeed { get { return moveSpeed; } protected set { moveSpeed = value; } }
+
+    private bool _inDialogue = false;
+    public bool InDialogue { get { return _inDialogue; } protected set { _inDialogue = value; } }
+    private NPCBehavior dialoguePartner;
 
     private bool _isMoving;
-    public bool IsMoving
-    {
-        get { return _isMoving; }
-        set { _isMoving = value; }
-    }
+    public bool IsMoving { get { return _isMoving; } set { _isMoving = value; } }
+
+    private bool _inMenu;
+    public bool InMenu { get { return _inMenu; } set { _inMenu = value; } }
 
     private Vector2 movement;
+    public Vector2 Movement { get { return movement; } protected set { movement = value; } }
 
-    public Animator animator;
-    public PlayerStats playerStats;
-    public PlayerInput playerInput;
+    private void Awake()
+    {
+        moveSpeed = regularMoveSpeed;
+    }
 
     public void TakeDamage()
     {
-        playerStats.ApplyDamage(20);
+        PlayerStats.takeDamage(20);
     }
 
     public void Heal()
     {
-        playerStats.AddHealth(20);
+        PlayerStats.takeHeal(20);
     }
-
     public void BringBackToLife()
     {
-        playerStats.BringCharacterToLife();
+        PlayerStats.bringToLife();
+        
     }
 
     public void Interact()
     {
 
-        if (!inDialogue)
+        if (!_inDialogue)
         {
 
             // Lowers position of Raycast origin to be nearer the sprites feet
@@ -58,15 +66,15 @@ public class PlayerBehavior : MonoBehaviour
             if (objectHit)
             {
 
-                dialoguePartner = objectHit.collider.GetComponent<NPCScript>();
+                dialoguePartner = objectHit.collider.GetComponent<NPCBehavior>();
                 dialoguePartner.RotateCharacter(movement.x * -1.0f, movement.y * -1.0f);
                 dialoguePartner.StartDialogue();
-                dialoguePanel.SetActive(true);
-                inDialogue = true;
+                PlayerHUDParent.toggleDialogueWindow();
+                _inDialogue = true;
 
             }
         } 
-        else if (inDialogue)
+        else if (_inDialogue)
         {
             FindObjectOfType<DialogueManager>().DisplayNextSentence();
         }
@@ -113,7 +121,7 @@ public class PlayerBehavior : MonoBehaviour
     {
         // Lowers position of Raycast origin to be nearer the sprites feet
         Vector3 origin = transform.position;
-        origin.y -= 0.5f;
+        origin.y -= feetHitboxOffset;
 
         // Checks if unmoveable objects are in player path
         if (Physics2D.BoxCast(origin, new Vector2(0.55f, 0.55f), 0f, movement, 0.35f, solidObjectsLayer | interactableLayer))
@@ -126,10 +134,29 @@ public class PlayerBehavior : MonoBehaviour
 
     public void EndDialogue()
     {
-        inDialogue = false;
-        dialoguePanel.SetActive(false);
+        _inDialogue = false;
+        PlayerHUDParent.toggleDialogueWindow();
         dialoguePartner.RotateCharacter(0f, 0f);
+        dialoguePartner = null;
     }
+
+    public void ChangeMovementSpeed(bool isSlowed)
+    {
+
+        if (isSlowed)
+        {
+            moveSpeed = slowedMoveSpeed;
+            animator.speed = 0.5f;
+        }
+        else
+        {
+            moveSpeed = regularMoveSpeed;
+            animator.speed = 1.0f;
+        }
+
+    }
+
+
 
 }
 

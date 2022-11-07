@@ -7,93 +7,104 @@ public class PlayerAttacks : MonoBehaviour
 
     public LayerMask solidObjectsLayer;
     public GameObject cantCastThere;
-    public GameObject damageZone;
-    public int coolDownTime;
-    public int abilityLength;
+    public GameObject managers;
 
-    private bool abilityActive = false;
-    private bool coolDownActive = false;
-    private float lastTimeAbilityWasUsed;
-    private float timeSinceCooldownBarTick;
-
-    private GameObject instantiatedObject;
-    private CoolDownBar coolDownBar;
-    private GameObject player;
+    public GameObject abilityOne;
+    public Ability abilityOneInfo;
+    public GameObject abilityTwo;
+    public Ability abilityTwoInfo;
+       
+   
+    private DataManager dataManager;
+    private CooldownManager coolDownManager;
 
     private void Awake()
     {
 
-        player = GameObject.Find("Player");
-        coolDownBar = GameObject.Find("CoolDownBar").GetComponent<CoolDownBar>();
-        coolDownBar.SetCoolDownTime(coolDownTime);
-        coolDownBar.SetCurrentTime(coolDownTime);
+        dataManager = managers.GetComponent<DataManager>();
+        coolDownManager = managers.GetComponent<CooldownManager>();
+
+        abilityOne = (GameObject)Resources.Load("Prefabs/Abilities/FrostPatch", typeof(GameObject));
+        abilityTwo = (GameObject)Resources.Load("Prefabs/Abilities/Fireball", typeof(GameObject));
+        abilityOneInfo = dataManager.LoadAbilityData("FrostPatch");
+        abilityTwoInfo = dataManager.LoadAbilityData("Fireball");
 
     }
 
-    private void Update()
+    public void ChangeAbilityOne(Ability ability)
+    {
+        abilityOne = LoadAbilityPrefab(ability.Code);
+        abilityOneInfo = LoadAbilityInfo(ability.Code);
+    }
+
+    public void ChangeAbilityTwo(Ability ability)
+    {
+        abilityTwo = LoadAbilityPrefab(ability.Code);
+        abilityTwoInfo = LoadAbilityInfo(ability.Code);
+    }
+
+    public Ability LoadAbilityInfo(string abilityName)
+    {
+        return dataManager.LoadAbilityData(abilityName);
+    }
+
+    public GameObject LoadAbilityPrefab(string prefabName)
     {
 
-        if (abilityActive)
+        return (GameObject)Resources.Load($"Prefabs/Abilities/{prefabName}", typeof(GameObject));
+
+    }
+
+    public void CastAbility1()
+    {
+        if (abilityOneInfo.CurrentCooldown <= 0)
         {
-            if(Time.time - lastTimeAbilityWasUsed >= abilityLength)
+            CastSpell(abilityOne, abilityOneInfo);
+        }
+    }
+
+    public void CastAbility2()
+    {
+        if (abilityTwoInfo.CurrentCooldown <= 0)
+        {
+            CastSpell(abilityTwo, abilityTwoInfo);
+        }
+    }
+
+    public void CastSpell(GameObject ability, Ability abilityInfo)
+    {
+        var spotClicked = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        spotClicked.z = 0.0f;
+
+        if (abilityInfo.IsAoe)
+        {
+           
+            if (CanCastLosSpell(spotClicked))
             {
-                Destroy(instantiatedObject);
-                abilityActive = false;
+                Instantiate(ability, spotClicked, new Quaternion());
+                coolDownManager.StartCooldown(abilityInfo);
+
             }
-        }
-
-        if (coolDownActive)
-        {
-            updateCoolDownBar();
-        }
-
-    }
-
-    void updateCoolDownBar()
-    {
-
-    }
-
-    public void SpawnDamageZone()
-    {
-        if (!CheckCoolDownActive() && !abilityActive)
-        {
-            var spotClicked = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            spotClicked.z = 0.0f;
-
-            if (canCastSpell(spotClicked))
+            else
             {
-                instantiatedObject = Instantiate(damageZone, spotClicked, new Quaternion());
-                abilityActive = true;
-                coolDownActive = true;
-                lastTimeAbilityWasUsed = Time.time;
-            } else
-            {
-                print("Can't cast there.");
-                instantiatedObject = Instantiate(cantCastThere, spotClicked, new Quaternion());
+                Instantiate(cantCastThere, spotClicked, new Quaternion());
             }
-            
+
+        } 
+        else
+        {
+            var boltAbility = Instantiate(ability, transform.position, new Quaternion());
+            boltAbility.GetComponent<IAbility>().GetDirectionToGo(spotClicked);
+            coolDownManager.StartCooldown(abilityInfo);
         }
-
-    }
-
-    private bool CheckCoolDownActive()
-    {
         
-        if((Time.time <= coolDownTime && !coolDownActive) || (Time.time - lastTimeAbilityWasUsed >= coolDownTime && !abilityActive))
-        {
-            coolDownActive = false;
-            return false;
-        }
-
-        return true;
     }
 
-    private bool canCastSpell(Vector3 clickPosition)
+    private bool CanCastLosSpell(Vector3 clickPosition)
     {
 
         // Checks for solid objects between cast location and player location
-        if(Physics2D.Linecast(player.transform.position, clickPosition, solidObjectsLayer))
+        if(Physics2D.Linecast(transform.position, clickPosition, solidObjectsLayer))
         {
             return false;
         }
