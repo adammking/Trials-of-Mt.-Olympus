@@ -4,64 +4,56 @@ using UnityEngine;
 
 public class PlayerBehavior : MonoBehaviour
 {
-    // Start is called before the first frame update
+    // Start is called before the first frame update\
     public float moveSpeed;
-    public float playerCollider = 0.2f;
     public LayerMask solidObjectsLayer;
     public LayerMask interactableLayer;
     public float interactDistance = 1.15f;
 
     public GameObject dialoguePanel;
     private bool inDialogue = false;
+    public bool InDialogue { get { return inDialogue; } set { inDialogue = value; } }
     private NPCScript dialoguePartner;
 
-    private bool isMoving;
-    private Vector2 input;
+    private bool _isMoving;
+    public bool IsMoving
+    {
+        get { return _isMoving; }
+        set { _isMoving = value; }
+    }
+
     private Vector2 movement;
-    public enum LastAxis { None, X, Y }
-    public LastAxis lastAxis = LastAxis.None;
 
-    private Animator animator;
+    public Animator animator;
+    public PlayerStats playerStats;
+    public PlayerInput playerInput;
 
-    private void Awake() 
+    public void TakeDamage()
     {
-        animator = GetComponent<Animator>();
+        playerStats.ApplyDamage(20);
     }
 
-    private void Update()
+    public void Heal()
     {
-        if (input.x == 0 && Input.GetAxisRaw("Horizontal") != 0) lastAxis = LastAxis.X;
-        if (input.y == 0 && Input.GetAxisRaw("Vertical") != 0) lastAxis = LastAxis.Y;
-
-        input.x = Input.GetAxisRaw("Horizontal");
-        input.y = Input.GetAxisRaw("Vertical");
-
-        if (input != Vector2.zero && !inDialogue)
-        {
-            isMoving = true;
-            Move();
-        } else
-        {
-            isMoving = false;
-        }
-
-        animator.SetBool("isMoving", isMoving);
-
-        if (Input.GetKeyDown(KeyCode.Z))
-        {
-            Interact();
-        }
-
-        
+        playerStats.AddHealth(20);
     }
 
-    void Interact()
+    public void BringBackToLife()
+    {
+        playerStats.BringCharacterToLife();
+    }
+
+    public void Interact()
     {
 
         if (!inDialogue)
         {
+
+            // Lowers position of Raycast origin to be nearer the sprites feet
             Vector3 currentPosition = transform.position;
             currentPosition.y -= 0.4f;
+
+            // Raycast to see if anything interactable is in front of the player
             RaycastHit2D objectHit = Physics2D.Raycast(currentPosition, movement, interactDistance, interactableLayer);
             if (objectHit)
             {
@@ -81,25 +73,21 @@ public class PlayerBehavior : MonoBehaviour
         
     }
 
-    void Move() {
+    public void Move() 
+    {
 
-        if (input.x != 0 && input.y != 0)
+        // Handles multiple movement keys being held down
+        if (playerInput.input.x != 0 && playerInput.input.y != 0)
         {
-            if (lastAxis == LastAxis.X)
-            {
-                movement.y = 0;
-                movement.x = input.x;
-            }
-            if (lastAxis == LastAxis.Y)
-            {
-                movement.x = 0;
-                movement.y = input.y;
-            }
-        } else
+            if (playerInput.lastAxis == PlayerInput.LastAxis.X) movement = new Vector2(playerInput.input.x, 0);
+            if (playerInput.lastAxis == PlayerInput.LastAxis.Y) movement = new Vector2(0, playerInput.input.y);
+        } 
+        else
         {
-            movement = input;
+            movement = playerInput.input;
         }
 
+        // Sets animation state based on current movement direction
         animator.SetFloat("moveX", movement.x);
         animator.SetFloat("moveY", movement.y);
 
@@ -107,59 +95,28 @@ public class PlayerBehavior : MonoBehaviour
         targetPos.x += movement.x;
         targetPos.y += movement.y;
 
-        if (IsWalkable(targetPos))
+
+        if (PathIsWalkable())
         {
-            transform.position = Vector3.MoveTowards(transform.position, targetPos, moveSpeed * Time.deltaTime);
+            // Moves character if the path ahead is walkable
+            transform.position = Vector2.MoveTowards(transform.position, targetPos, moveSpeed * Time.deltaTime);
         }
         else
         {
-            isMoving = false;
+            // Changes movement state when not able to continue walking
+            _isMoving = false;
         }
+
     }
 
-    private bool IsWalkable(Vector3 targetPos) 
+    private bool PathIsWalkable() 
     {
-        /*var previousTargetPos = targetPos;
-
-        if (input.x != 0 && input.y != 0)
-        {
-
-        }
-        else if (input.y == 0)
-        {
-            targetPos.y -= 0.4f;
-
-            if (input.x > 0)
-            {
-                targetPos.x -= 0.6f;
-            }
-            else if (input.x < 0)
-            {
-                targetPos.x += 0.6f;
-            }
-        }
-        else if (input.x == 0)
-        {
-            if (input.y >= 0)
-            {
-                targetPos.y -= 1.2f;
-            }
-            else if (input.y < 0)
-            {
-                targetPos.y += 0.6f;
-            }
-        }*/
-
+        // Lowers position of Raycast origin to be nearer the sprites feet
         Vector3 origin = transform.position;
         origin.y -= 0.5f;
 
-        float distance = 0.35f;
-        if (animator.GetFloat("moveY") < 0)
-        {
-            distance = 0.25f;
-        }
-
-        if (Physics2D.BoxCast(origin, new Vector2(0.55f, 0.55f), 0f, movement, distance, solidObjectsLayer | interactableLayer))
+        // Checks if unmoveable objects are in player path
+        if (Physics2D.BoxCast(origin, new Vector2(0.55f, 0.55f), 0f, movement, 0.35f, solidObjectsLayer | interactableLayer))
         {
             return false;
         }
