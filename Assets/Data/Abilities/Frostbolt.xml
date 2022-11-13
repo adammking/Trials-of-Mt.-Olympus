@@ -1,0 +1,6 @@
+<ability code="Frostbolt" name="Frostbolt">
+        <description>Launches a bolt of frost in the direction that will inflict 20 damage.</description>
+        <dmg>20</dmg>
+        <coolDown>2</coolDown>
+        <isAoe>false</isAoe>
+</ability>

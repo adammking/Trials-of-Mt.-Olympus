@@ -1,0 +1,8 @@
+<ability code="AoeSpell" name="AoE Spell">
+        <description>Produces an area that will cause 5 damage every 0.5 seconds.</description>
+        <dmg>5</dmg>
+        <tickRate>0.5</tickRate>
+        <coolDown>7</coolDown>
+        <abilityLength>5</abilityLength>
+        <isAoe>true</isAoe>
+</ability>

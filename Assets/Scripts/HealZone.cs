@@ -10,24 +10,28 @@ public class HealZone : MonoBehaviour
 
     private float timeSinceLastUpdate;
 
-    private PlayerStats playerStats;
-
     private void Awake()
     {
-        playerStats = GameObject.Find("Player").GetComponent<PlayerStats>();
+        
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        ApplyHeal();
+        if (collision.gameObject.CompareTag("Player"))
+        {
+            ApplyHeal();
+        }
     }
 
     private void OnTriggerStay2D(Collider2D collision)
     {
-        
-        if(Time.time - timeSinceLastUpdate >= rate)
+
+        if (collision.gameObject.CompareTag("Player"))
         {
-            ApplyHeal();
+            if (Time.time - timeSinceLastUpdate >= rate)
+            {
+                ApplyHeal();
+            }
         }
 
     }
@@ -35,7 +39,7 @@ public class HealZone : MonoBehaviour
     private void ApplyHeal()
     {
         timeSinceLastUpdate = Time.time;
-        playerStats.AddHealth(healValue);
+        PlayerStats.takeHeal(healValue);
     }
 
 }

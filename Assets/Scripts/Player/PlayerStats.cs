@@ -12,6 +12,7 @@ public class PlayerStats : MonoBehaviour
     private int _maxStamina = 100;
     private int _currentStamina = 100;
     private bool isAlive = true;
+    private bool inCombat = false;
 
     public int MaxHealth
     {
@@ -40,15 +41,42 @@ public class PlayerStats : MonoBehaviour
         protected set { isAlive = value; }
     }
 
-    private HealthBar healthBar;
-    private DeathUIScript deathScript;
+    public bool InCombat
+    {
+        get { return inCombat; }
+        protected set { inCombat = value; }
+    }
+
+    public PlayerHealthBar healthBar;
+
+    public delegate void TakeDamage(int damage);
+    public static TakeDamage takeDamage;
+
+    public delegate void TakeHeal(int heal);
+    public static TakeHeal takeHeal;
+
+    public delegate void BringToLife();
+    public static BringToLife bringToLife;
 
     void Awake()
     {
-        healthBar = GameObject.Find("HealthBar").GetComponent<HealthBar>();
+        healthBar = healthBar.GetComponent<PlayerHealthBar>();
         UpdateHealthBarMaxHealth();
         UpdateHealthBar();
-        deathScript = GameObject.Find("YouDied").GetComponent<DeathUIScript>();
+    }
+
+    private void OnEnable()
+    {
+        takeDamage += ApplyDamage;
+        takeHeal += AddHealth;
+        bringToLife += BringCharacterToLife;
+    }
+
+    public void OnDisable()
+    {
+        takeDamage -= ApplyDamage;
+        takeHeal -= AddHealth;
+        bringToLife -= BringCharacterToLife;
     }
 
     public void SetHealth(int value)
@@ -71,6 +99,11 @@ public class PlayerStats : MonoBehaviour
 
     public void AddHealth(int value)
     {
+        if (_currentHealth == _maxHealth)
+        {
+            return;
+        }
+
         if (isAlive)
         {
             _currentHealth += value;
@@ -120,14 +153,14 @@ public class PlayerStats : MonoBehaviour
         _currentStamina = Mathf.Clamp(_currentStamina, 0, _maxStamina);
     }
 
-    public void UpdateHealthBar()
+    private void UpdateHealthBar()
     {
         healthBar.SetHealth(_currentHealth);
     }
 
-    public void UpdateHealthBarMaxHealth()
+    private void UpdateHealthBarMaxHealth()
     {
-        healthBar.SetMaxHealth(_maxHealth);
+        healthBar.SetMaxHealth(_currentHealth);
     }
 
     private void CharacterDeath()
@@ -136,8 +169,7 @@ public class PlayerStats : MonoBehaviour
         {
             print("You're dead. RIP.");
             isAlive = false;
-            deathScript.EnableObject();
-            deathScript.ShowDeathImage();
+            DeathUIScript.characterDead();
             Time.timeScale = 0.0f;
         }
         
@@ -150,8 +182,7 @@ public class PlayerStats : MonoBehaviour
             print("Welcome back from the dead.");
             isAlive = true;
             SetHealth(_maxHealth);
-            deathScript.HideDeathImage();
-            deathScript.DisableObject();
+            DeathUIScript.characterBroughtToLife();
             Time.timeScale = 1.0f;
         }
         else

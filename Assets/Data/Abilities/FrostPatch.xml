@@ -1,0 +1,5 @@
+<ability code="FrostPatch" name="Frost Patch">
+        <description>Places a patch of frost that slows whoever walks upon it.</description>
+        <coolDown>7</coolDown>
+        <isAoe>true</isAoe>
+</ability>

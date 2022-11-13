@@ -10,16 +10,9 @@ public class DamageZone : MonoBehaviour
 
     private float timeSinceLastUpdate;
 
-    private PlayerStats playerStats;
-
-    private void Awake()
-    {
-        playerStats = GameObject.Find("Player").GetComponent<PlayerStats>();
-    }
-
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (collision.tag == "Player")
+        if (collision.CompareTag("Player"))
         {
             ApplyDamage();
         }
@@ -29,7 +22,7 @@ public class DamageZone : MonoBehaviour
     private void OnTriggerStay2D(Collider2D collision)
     {
 
-        if (Time.time - timeSinceLastUpdate >= rate && collision.tag == "Player")
+        if (Time.time - timeSinceLastUpdate >= rate && collision.CompareTag("Player"))
         {
             ApplyDamage();
         }
@@ -39,7 +32,7 @@ public class DamageZone : MonoBehaviour
     private void ApplyDamage()
     {
         timeSinceLastUpdate = Time.time;
-        playerStats.ApplyDamage(damage);
+        PlayerStats.takeDamage(damage);
     }
 
 }
